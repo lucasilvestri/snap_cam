@@ -1,0 +1,3 @@
+/root/src/snap_cam/build/klt_feature_tracker/CMakeFiles/klt_feature_tracker.dir
+/root/src/snap_cam/build/CMakeFiles/optical_flow.dir
+/root/src/snap_cam/build/CMakeFiles/snap_cam.dir

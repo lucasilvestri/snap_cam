@@ -66,7 +66,7 @@ struct GyroTimestamped {
 	uint64_t time_usec;
 };
 
-ringbuffer::RingBuffer rb_imu(1000, sizeof(GyroTimestamped));
+ringbuffer::RingBuffer rb_imu(100000, sizeof(GyroTimestamped));
 ringbuffer::RingBuffer rb_flow(10000, sizeof(mavlink_optical_flow_rad_t));
 
 // declare helper functions
@@ -325,6 +325,16 @@ void sendOptFlowMessage()
 			return;
 		}
 
+
+		GyroTimestamped oldest_gyro;
+                rb_imu.peak(&oldest_gyro);
+
+                if (false && integration_start_time < oldest_gyro.time_usec) {
+                        WARN("The integration start time is %lld in ritardo rispetto alla prima  IMU disponibile", oldest_gyro.time_usec - integration_start_time);
+                        WARN("Oldest flow time %lld , oldest gyro time %lld, latest gyro time %lld,  integration_start_time %lld", oldest_flow.time_usec, oldest_gyro.time_usec, latest_gyro.time_usec,  integration_start_time);
+                }
+
+
 		mavlink_optical_flow_rad_t sensor_msg;
 		rb_flow.get(&sensor_msg);
 
@@ -345,10 +355,19 @@ void sendOptFlowMessage()
 		double dt = 0;
 		uint64_t last_imu_time = g.time_usec;
 
+
+//WARN("%lld, %lld, %lld, %lld, %lld, %lld", (oldest_flow.time_usec/1000)%1000, (integration_start_time/1000)%1000, (latest_gyro.time_usec/1000)%1000, (oldest_gyro.time_usec/1000)%1000, ((oldest_flow.time_usec/1000)%1000) - ((integration_start_time/1000)%1000), ((latest_gyro.time_usec/1000)%1000) - ((oldest_gyro.time_usec/1000)%1000) );
+
 		do {
 			if (!rb_imu.get(&g)) {
-				ERROR("IMU buffer is empty! Last IMU time %lld, new image time %lld, dt %lld", g.time_usec, sensor_msg.time_usec,
-				      sensor_msg.time_usec - g.time_usec);
+				ERROR("IMU buffer is empty! Last IMU time %lld, new image time %lld, dt %lld", g.time_usec, sensor_msg.time_usec, sensor_msg.time_usec - g.time_usec);
+
+                        //WARN("The integration start time is %lld in ritardo rispetto alla prima  IMU disponibile", oldest_gyro.time_usec - integration_start_time);
+                        //WARN("Oldest flow time %lld , oldest gyro time %lld, latest gyro time %lld,  integration_start_time %lld", oldest_flow.time_usec, oldest_gyro.time_usec, latest_gyro.time_usec,  integration_start_time);
+                	//WARN("%lld, %lld, %lld, %lld", (oldest_flow.time_usec/1000)%1000, (integration_start_time/1000)%1000, (latest_gyro.time_usec/1000)%1000, (oldest_gyro.time_usec/1000)%1000);
+
+
+
 				return;
 			}
 
@@ -573,7 +592,9 @@ void handle_message_highres_imu(mavlink_message_t *msg)
 	gyro.xgyro      = highres_imu.xgyro;
 	gyro.ygyro      = highres_imu.ygyro;
 	gyro.zgyro      = highres_imu.zgyro;
-	gyro.time_usec  = highres_imu.time_usec;
+	gyro.time_usec  = get_absolute_time(); //highres_imu.time_usec;
+
+	//WARN("%lld",((gyro.time_usec-highres_imu.time_usec)/1000)%1000);
 
 	if (rb_imu.force(&gyro)) {
 		ERROR("IMU buffer is overflowing!");

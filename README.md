@@ -1,4 +1,4 @@
-# Snapdragon: Camera driver
+# RD: Snapdragon: Camera driver
 This package provides tools to work with the Snapdragon Flight cameras as well as perform optical flow for use with the PX4 flight stack.
 The package can be used with ROS by building with catkin or, alternatively, with pure cmake, where only the executables that do not depend on ROS will be built.
 

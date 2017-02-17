@@ -1,0 +1,2 @@
+/usr/bin/ar cr libsnap_cam.a  CMakeFiles/snap_cam.dir/src/SnapCam.cpp.o
+/usr/bin/ranlib libsnap_cam.a
